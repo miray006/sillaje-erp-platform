@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banka Operasyon Platformu</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #070B14;
+            --bg-card: #0D1424;
+            --bg-sidebar: #090E1A;
+            --bg-glass: rgba(13, 20, 36, 0.75);
+            --border-color: #1E293B;
+            --border-glass: rgba(59, 130, 246, 0.18);
+            
+            --primary: #3B82F6;
+            --primary-dark: #1D4ED8;
+            --primary-light: #60A5FA;
+            
+            --text-main: #F8FAFC;
+            --text-muted: #94A3B8;
+            --text-dim: #64748B;
+            
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            
+            --radius-md: 12px;
+            --radius-lg: 18px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(29, 78, 216, 0.06) 0%, transparent 40%);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+        }
+
+        /* Glass Login Overlay */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(7, 11, 20, 0.94);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+
+        .login-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .login-card {
+            width: 540px;
+            max-width: 92vw;
+            background: rgba(13, 20, 36, 0.9);
+            backdrop-filter: blur(32px);
+            -webkit-backdrop-filter: blur(32px);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            border-radius: 28px;
+            padding: 52px 46px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.85), 0 0 45px rgba(59, 130, 246, 0.25);
+            text-align: center;
+            position: relative;
+        }
+        .login-logo {
+            width: 72px;
+            height: 72px;
+            border-radius: 22px;
+            background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 34px;
+            font-weight: 800;
+            color: #FFF;
+            margin: 0 auto 20px auto;
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.6);
+        }
+        .login-title {
+            font-size: 26px;
+            font-weight: 800;
+            color: #FFF;
+            letter-spacing: 1.5px;
+            margin-bottom: 6px;
+        }
+        .login-subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 13px 16px;
+            background: rgba(9, 14, 26, 0.9);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: #FFF;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 13px 20px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border: none;
+            border-radius: var(--radius-md);
+            color: #FFF;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
+        }
+
+        .login-error {
+            margin-top: 14px;
+            padding: 10px;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            color: #FCA5A5;
+            font-size: 13px;
+            display: none;
+        }
+
+        /* App Wrapper */
+        .app-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 270px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 24px 16px;
+            z-index: 20;
+        }
+
+        .brand-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 10px;
+            margin-bottom: 24px;
+        }
+
+        .brand-logo {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 800;
+            color: #FFF;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .brand-title {
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            color: #FFF;
+        }
+
+        .nav-menu {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            color: var(--text-muted);
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: #FFF;
+            transform: translateX(4px);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.22) 0%, rgba(29, 78, 216, 0.08) 100%);
+            border-left: 3px solid var(--primary);
+            color: #FFF;
+        }
+
+        .nav-icon {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            flex-shrink: 0;
+        }
+
+        /* Glass Sidebar Footer User Profile */
+        .user-glass-card {
+            background: rgba(13, 20, 36, 0.7);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: #FFF;
+            font-size: 15px;
+        }
+
+        .user-info h4 {
+            font-size: 13px;
+            font-weight: 700;
+            color: #FFF;
+        }
+
+        .user-info p {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        /* Main Content View */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 28px 36px;
+        }
+
+        .top-navbar {
+            margin-bottom: 24px;
+        }
+
+        .top-navbar h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: #FFF;
+            letter-spacing: -0.5px;
+        }
+
+        /* KPI Cards Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .kpi-card label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+        }
+
+        .kpi-card .value {
+            font-size: 24px;
+            font-weight: 800;
+            color: #FFF;
+            margin-top: 6px;
+        }
+
+        .kpi-card .sub-text {
+            font-size: 11px;
+            color: var(--primary-light);
+            margin-top: 4px;
+        }
+
+        /* Main Panel Glass Card */
+        .panel-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .panel-title h3 {
+            font-size: 18px;
+            font-weight: 800;
+            color: #FFF;
+        }
+
+        .panel-title p {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        /* Tab Panels */
+        .tab-panel {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom Table */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13.5px;
+        }
+
+        th {
+            background: rgba(9, 14, 26, 0.9);
+            color: var(--text-muted);
+            padding: 14px 18px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 16px 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #E2E8F0;
+            vertical-align: middle;
+        }
+
+        tr:hover td {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        /* Badges & Buttons */
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .badge-pending {
+            background: rgba(245, 158, 11, 0.15);
+            color: #FBBF24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .badge-collected {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34D399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+            color: #FFF;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.5);
+        }
+
+        /* Toast Container */
+        .toast-container {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+        }
+
+        .toast {
+            pointer-events: auto;
+            min-width: 320px;
+            max-width: 440px;
+            background: rgba(13, 20, 36, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 14px;
+            padding: 16px 20px;
+            color: #FFF;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.7);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Glassmorphic Login Overlay -->
+    <div id="bank-login-overlay" class="login-overlay">
+        <div class="login-card">
+            <div class="login-logo">B</div>
+            <div class="login-title">BANKA PLATFORMU</div>
+            <div class="login-subtitle">Banka Operasyon Platformu</div>
+
+            <form id="bank-login-form">
+                <div class="form-group">
+                    <label>Kurumsal E-Posta</label>
+                    <input type="email" id="bank-email" class="form-input" value="banka@kurumsal-banka.com" required placeholder="banka@kurumsal-banka.com">
+                </div>
+                <div class="form-group">
+                    <label>Şifre</label>
+                    <input type="password" id="bank-password" class="form-input" value="Banka2026!" required placeholder="••••••••">
+                </div>
+
+                <div id="bank-login-error" class="login-error">Hatalı e-posta veya şifre!</div>
+
+                <button type="submit" class="btn-primary" style="margin-top: 20px;">
+                    Banka Portalı Giriş Yap
+                </button>
+            </form>
+            <div style="margin-top: 18px; font-size: 11px; color: var(--text-dim);">Giriş Bilgileri: banka@kurumsal-banka.com / Banka2026!</div>
+        </div>
+    </div>
+
+    <!-- Main Layout Container -->
+    <div class="app-container">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div>
+                <div class="brand-header">
+                    <div class="brand-logo">B</div>
+                    <div class="brand-title">BANKA PLATFORMU</div>
+                </div>
+
+                <ul class="nav-menu">
+                    <li class="nav-item" data-tab="receivables">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Bekleyen Alacaklar
+                    </li>
+                    <li class="nav-item" data-tab="logs">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        İşlemler
+                    </li>
+                    <li class="nav-item active" data-tab="accounts">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m3 0h1M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        Kurumsal Hesaplar
+                    </li>
+                    <li class="nav-item" data-tab="outbox">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        E-Posta Çıkışları
+                    </li>
+                </ul>
+            </div>
+
+            <!-- User Footer Card -->
+            <div class="user-glass-card">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="user-avatar">H</div>
+                    <div class="user-info">
+                        <h4>Operasyon Müdürü</h4>
+                        <p>Senior Executive</p>
+                    </div>
+                </div>
+                <button onclick="bankLogout()" style="background: transparent; border: none; color: var(--danger); cursor: pointer;" title="Çıkış Yap">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Wrapper Content -->
+        <main class="main-content">
+            
+            <div class="top-navbar">
+                <h1>Banka Operasyon Platformu</h1>
+            </div>
+
+            <!-- 4 Top KPI Cards (Navy Glass Card Style) -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <label>TOPLAM ALACAK HACMİ</label>
+                    <div id="kpi-total-amount" class="value">2.152.218,00 TL</div>
+                    <div class="sub-text">Sistemdeki tüm kayıtlar</div>
+                </div>
+                <div class="kpi-card">
+                    <label>BEKLEYEN ALACAKLAR</label>
+                    <div id="kpi-pending-amount" class="value" style="color: var(--warning);">0,00 TL</div>
+                    <div class="sub-text">Tahsil Edilmeyi Bekleyen</div>
+                </div>
+                <div class="kpi-card">
+                    <label>TAHSİL EDİLEN TUTARLAR</label>
+                    <div id="kpi-collected-amount" class="value" style="color: var(--success);">2.152.218,00 TL</div>
+                    <div class="sub-text">ERP'ye Dekont Gönderildi</div>
+                </div>
+                <div class="kpi-card">
+                    <label>KAYITLI BAYİ LİMİTİ</label>
+                    <div id="kpi-total-limit" class="value">45.200.000,00 TL</div>
+                    <div class="sub-text">15 Kurumsal Bayi Hesabı</div>
+                </div>
+            </div>
+
+            <!-- TAB 1: RECEIVABLES -->
+            <div id="tab-receivables" class="tab-panel">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <h3>Bekleyen Alacaklar & Otomatik Tahsilat</h3>
+                            <p>SILLAJÉ ERP tarafından iletilen alacak kayıtları</p>
+                        </div>
+                        <button class="btn-primary" style="width: auto;" onclick="collectAllDBS()">
+                            Vadesi Gelenleri Tahsil Et & ERP'ye Dekont Gönder
+                        </button>
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Referans No</th>
+                                    <th>Borçlu Bayi</th>
+                                    <th>ERP Fatura No</th>
+                                    <th>Tutar</th>
+                                    <th>Vade Tarihi</th>
+                                    <th>Durum</th>
+                                    <th>Aksiyon</th>
+                                </tr>
+                            </thead>
+                            <tbody id="receivables-tbody">
+                                <!-- Dynamic -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: LOGS -->
+            <div id="tab-logs" class="tab-panel">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <h3>Banka Operasyon Log Kayıtları</h3>
+                            <p>Sistemdeki tüm alacak kayıt ve tahsilat hareketleri</p>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Zaman Stamp</th>
+                                    <th>İşlem Tipi</th>
+                                    <th>Detaylar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logs-tbody">
+                                <!-- Dynamic -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: ACCOUNTS & DEALER LIMITS (MATCHING SCREENSHOT 1,3,4,5) -->
+            <div id="tab-accounts" class="tab-panel active">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <h3>Kurumsal Bayi Kredi Limitleri</h3>
+                            <p>Banka bünyesindeki bayi kredi limit durumları</p>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>BAYİ KODU</th>
+                                    <th>BAYİ UNVANI</th>
+                                    <th>VERGİ KİMLİK NO</th>
+                                    <th>TOPLAM KREDİ LİMİTİ</th>
+                                    <th>KULLANILAN RİSK</th>
+                                    <th>KULLANILABİLİR LİMİT</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dealers-tbody">
+                                <!-- Dynamic Dealer Limits Table -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: OUTBOX EMAIL DISPATCH LOGS -->
+            <div id="tab-outbox" class="tab-panel">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <h3>E-Posta Çıkış Logları</h3>
+                            <p>SILLAJÉ ERP alıcısına gönderilen resmi bildirim kayıtları</p>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tarih</th>
+                                    <th>Alıcı URL</th>
+                                    <th>İletilen Dekont No</th>
+                                    <th>Durum</th>
+                                </tr>
+                            </thead>
+                            <tbody id="emails-tbody">
+                                <!-- Dynamic -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script>
+        // Ensure Login Screen Appears First on load
+        document.addEventListener("DOMContentLoaded", () => {
+            const overlay = document.getElementById("bank-login-overlay");
+            if (overlay && !localStorage.getItem("bank_user_logged_in")) {
+                overlay.classList.remove("hidden");
+            } else if (overlay) {
+                overlay.classList.add("hidden");
+            }
+            loadBankData();
+        });
+
+        // Login Logic
+        const loginForm = document.getElementById("bank-login-form");
+        if (loginForm) {
+            loginForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const email = document.getElementById("bank-email").value.trim();
+                const password = document.getElementById("bank-password").value.trim();
+                const errEl = document.getElementById("bank-login-error");
+
+                if (email === "banka@kurumsal-banka.com" && password === "Banka2026!") {
+                    localStorage.setItem("bank_user_logged_in", "true");
+                    document.getElementById("bank-login-overlay").classList.add("hidden");
+                    showToast("Banka Operasyon Portalı sistemine hoş geldiniz", "success");
+                    loadBankData();
+                } else {
+                    errEl.style.display = "block";
+                    showToast("Hatalı e-posta veya şifre!", "error");
+                }
+            });
+        }
+
+        function bankLogout() {
+            localStorage.removeItem("bank_user_logged_in");
+            const overlay = document.getElementById("bank-login-overlay");
+            if (overlay) overlay.classList.remove("hidden");
+            showToast("Banka portalı oturumu kapatıldı.", "info");
+        }
+
+        // Tab Switching Logic
+        document.querySelectorAll(".nav-item[data-tab]").forEach(item => {
+            item.addEventListener("click", () => {
+                const target = item.getAttribute("data-tab");
+                document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
+                item.classList.add("active");
+
+                document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+                const targetPanel = document.getElementById(`tab-${target}`);
+                if (targetPanel) targetPanel.classList.add("active");
+            });
+        });
+
+        // Fetch Data from Server
+        async function loadBankData() {
+            try {
+                const res = await fetch("/api/dbs/receivables");
+                const data = await res.json();
+                if (data.status === "success") {
+                    renderReceivables(data.transactions || []);
+                    renderDealers(data.dealers || []);
+                    calculateKPIs(data.transactions || [], data.dealers || []);
+                }
+            } catch (err) {
+                console.error("loadBankData error:", err);
+            }
+            loadLogs();
+        }
+
+        function renderReceivables(transactions) {
+            const tbody = document.getElementById("receivables-tbody");
+            if (!tbody) return;
+
+            if (transactions.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-dim);">Sistemde alacak kaydı bulunmuyor.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = transactions.map(tx => `
+                <tr>
+                    <td><strong style="color: var(--primary);">${tx.dbs_ref}</strong></td>
+                    <td><strong>${tx.dealer_name}</strong> <span style="font-size: 11px; color: var(--text-dim);">(${tx.dealer_code})</span></td>
+                    <td>${tx.invoice_no}</td>
+                    <td style="font-weight: 800; color: #FFF;">${parseFloat(tx.amount).toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL</td>
+                    <td>${tx.due_date}</td>
+                    <td><span class="badge ${tx.status === 'Bekliyor' ? 'badge-pending' : 'badge-collected'}">${tx.status}</span></td>
+                    <td>
+                        ${tx.status === 'Bekliyor' ? `
+                            <button class="btn-success" onclick="collectSingleDBS(${tx.id})">Tahsil Et</button>
+                        ` : `<span style="font-size: 12px; color: var(--text-dim);">${tx.receipt_code || 'İşlem Yapıldı'}</span>`}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderDealers(dealers) {
+            const tbody = document.getElementById("dealers-tbody");
+            if (!tbody) return;
+
+            tbody.innerHTML = dealers.map(d => `
+                <tr>
+                    <td><strong>${d.dealer_code}</strong></td>
+                    <td><strong>${d.dealer_name}</strong></td>
+                    <td>${d.tax_no}</td>
+                    <td style="font-weight: 700; color: #FFF;">${parseFloat(d.dbs_limit || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL</td>
+                    <td style="color: #F59E0B; font-weight: 700;">${parseFloat(d.used_limit || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL</td>
+                    <td style="color: #10B981; font-weight: 700;">${parseFloat(d.available_limit || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL</td>
+                </tr>
+            `).join('');
+        }
+
+        function calculateKPIs(transactions, dealers) {
+            let total = 0, pending = 0, collected = 0;
+            transactions.forEach(tx => {
+                const amt = parseFloat(tx.amount || 0);
+                total += amt;
+                if (tx.status === 'Bekliyor') pending += amt;
+                else collected += amt;
+            });
+
+            let totalDealerLimit = 0;
+            dealers.forEach(d => totalDealerLimit += parseFloat(d.dbs_limit || 0));
+
+            const totalEl = document.getElementById("kpi-total-amount");
+            if (totalEl) totalEl.innerText = `${total.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL`;
+
+            const pendingEl = document.getElementById("kpi-pending-amount");
+            if (pendingEl) pendingEl.innerText = `${pending.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL`;
+
+            const collectedEl = document.getElementById("kpi-collected-amount");
+            if (collectedEl) collectedEl.innerText = `${collected.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL`;
+
+            const limitEl = document.getElementById("kpi-total-limit");
+            if (limitEl && totalDealerLimit > 0) limitEl.innerText = `${totalDealerLimit.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL`;
+        }
+
+        async function collectAllDBS() {
+            if (!confirm("Bekleyen tüm alacaklar tahsil edilip SILLAJÉ ERP sistemine otomatik dekont maili gönderilsin mi?")) return;
+            try {
+                const res = await fetch("/api/dbs/collect", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({})
+                });
+                const data = await res.json();
+                showToast(data.message, "success");
+                loadBankData();
+            } catch (err) {
+                showToast(`Tahsilat Hatası: ${err.message}`, "error");
+            }
+        }
+
+        async function collectSingleDBS(txId) {
+            try {
+                const res = await fetch("/api/dbs/collect", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ transaction_id: txId })
+                });
+                const data = await res.json();
+                showToast(data.message, "success");
+                loadBankData();
+            } catch (err) {
+                showToast(`Tahsilat Hatası: ${err.message}`, "error");
+            }
+        }
+
+        async function loadLogs() {
+            try {
+                const res = await fetch("/api/logs");
+                const data = await res.json();
+                const tbody = document.getElementById("logs-tbody");
+                const outboxTbody = document.getElementById("emails-tbody");
+
+                if (data.status === "success" && data.logs) {
+                    if (tbody) {
+                        tbody.innerHTML = data.logs.map(log => `
+                            <tr>
+                                <td style="color: var(--text-dim); font-size: 12px;">${log.created_at}</td>
+                                <td><span class="badge badge-pending">${log.action}</span></td>
+                                <td>${log.details}</td>
+                            </tr>
+                        `).join('');
+                    }
+
+                    if (outboxTbody) {
+                        const emailLogs = data.logs.filter(l => l.action.includes('TAHSILAT') || l.details.includes('Dekont'));
+                        outboxTbody.innerHTML = emailLogs.map(l => `
+                            <tr>
+                                <td style="color: var(--text-dim); font-size: 12px;">${l.created_at}</td>
+                                <td style="color: var(--primary);">http://127.0.0.1:5000/api/webhook/mail-gonder</td>
+                                <td><strong>${l.details.split('Dekont No: ')[1]?.split(' ')[0] || 'DEKONT-2026'}</strong></td>
+                                <td><span class="badge badge-collected">HTTP 200 OK (İletildi)</span></td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+            } catch (err) {
+                console.error("loadLogs error:", err);
+            }
+        }
+
+        function showToast(msg, type = "success") {
+            const container = document.getElementById("toast-container");
+            if (!container) return;
+
+            const toast = document.createElement("div");
+            toast.className = `toast`;
+            toast.innerHTML = `<strong style="text-transform: uppercase; font-size: 12px;">${type === 'success' ? 'Başarılı' : 'Bilgi'}</strong><div style="margin-top: 4px; font-size: 13px;">${msg}</div>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        // Auto Refresh Every 6 seconds
+        setInterval(loadBankData, 6000);
+    </script>
+</body>
+</html>

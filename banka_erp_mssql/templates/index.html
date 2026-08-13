@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sillaje ERP & Banka MSSQL Entegrasyon Platformu</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo-icon"><i class="fa-solid fa-building-columns"></i></div>
+                <div class="brand-text">
+                    <h2>SILLAJE <span>ERP</span></h2>
+                    <small>MSSQL Bank Platform</small>
+                </div>
+            </div>
+
+            <div class="mssql-badge" id="mssqlStatusBadge">
+                <div class="status-indicator loading"></div>
+                <div class="badge-info">
+                    <span class="badge-title">MSSQL Sunucu</span>
+                    <span class="badge-server" id="mssqlServerName">DESKTOP-02AA25J...</span>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <button class="nav-item active" data-tab="dashboard">
+                    <i class="fa-solid fa-chart-line"></i> Dashboard
+                </button>
+                <button class="nav-item" data-tab="banka">
+                    <i class="fa-solid fa-wallet"></i> Banka Ekstresi
+                </button>
+                <button class="nav-item" data-tab="erp">
+                    <i class="fa-solid fa-file-invoice-dollar"></i> ERP Faturaları
+                </button>
+                <button class="nav-item" data-tab="mutabakat">
+                    <i class="fa-solid fa-handshake"></i> Akıllı Mutabakat
+                </button>
+                <button class="nav-item" data-tab="loglar">
+                    <i class="fa-solid fa-list-check"></i> Sistem Logları
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="btnRunSync" class="btn btn-primary btn-block">
+                    <i class="fa-solid fa-bolt"></i> Akıllı Mutabakat Tetikle
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="header-title">
+                    <h1 id="pageTitle">Kurumsal Banka & ERP Entegrasyon Kontrol Paneli</h1>
+                    <p class="subtitle">Veriler doğrudan yerel <strong>MSSQL Server</strong> veritabanından çekilmektedir.</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-outline" id="btnRefresh">
+                        <i class="fa-solid fa-rotate-right"></i> Yenile
+                    </button>
+                </div>
+            </header>
+
+            <!-- TAB 1: DASHBOARD -->
+            <section id="tab-dashboard" class="tab-content active">
+                <div class="metrics-grid">
+                    <div class="card metric-card">
+                        <div class="metric-icon blue"><i class="fa-solid fa-vault"></i></div>
+                        <div class="metric-data">
+                            <span class="metric-label">Toplam Banka Bakiyesi</span>
+                            <h3 class="metric-value" id="valBankaBakiye">0,00 ₺</h3>
+                            <span class="metric-sub text-success"><i class="fa-solid fa-shield-halved"></i> Canlı MSSQL Hesabı</span>
+                        </div>
+                    </div>
+
+                    <div class="card metric-card">
+                        <div class="metric-icon orange"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                        <div class="metric-data">
+                            <span class="metric-label">Bekleyen ERP Tahsilatları</span>
+                            <h3 class="metric-value" id="valBekleyenTutar">0,00 ₺</h3>
+                            <span class="metric-sub" id="valBekleyenFaturaSayi">0 Fatura Bekliyor</span>
+                        </div>
+                    </div>
+
+                    <div class="card metric-card">
+                        <div class="metric-icon green"><i class="fa-solid fa-circle-check"></i></div>
+                        <div class="metric-data">
+                            <span class="metric-label">Tahsil Edilen Toplam</span>
+                            <h3 class="metric-value" id="valTahsilTutar">0,00 ₺</h3>
+                            <span class="metric-sub text-success"><i class="fa-solid fa-check"></i> Otomatik Mutabakat Başarılı</span>
+                        </div>
+                    </div>
+
+                    <div class="card metric-card">
+                        <div class="metric-icon purple"><i class="fa-solid fa-diagram-project"></i></div>
+                        <div class="metric-data">
+                            <span class="metric-label">Eşleşme Oranı</span>
+                            <h3 class="metric-value" id="valEslesmeOran">%0</h3>
+                            <span class="metric-sub" id="valEslesmeDetay">0 / 0 Ekstre Hareketi</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Database Connection Details Card -->
+                <div class="card mssql-info-card">
+                    <div class="card-header">
+                        <h3><i class="fa-database fa-solid"></i> Doğrudan MSSQL Bağlantı Bilgisi</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="db-details-grid">
+                            <div class="db-item">
+                                <span class="db-label">Sunucu (Server):</span>
+                                <code id="infoServerName">DESKTOP-02AA25J\MSSQLSERVER01</code>
+                            </div>
+                            <div class="db-item">
+                                <span class="db-label">Veri Tabanı (Database):</span>
+                                <code>SillajeERP</code>
+                            </div>
+                            <div class="db-item">
+                                <span class="db-label">ODBC Sürücüsü:</span>
+                                <code>ODBC Driver 17 for SQL Server</code>
+                            </div>
+                            <div class="db-item">
+                                <span class="db-label">Bağlantı Türü:</span>
+                                <code>Trusted_Connection (Windows Auth)</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Tables Section -->
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-building-columns"></i> Banka Hesap Bakiyeleri (MSSQL)</h3>
+                        </div>
+                        <div class="card-body">
+                            <table class="data-table" id="tblBankaHesapozet">
+                                <thead>
+                                    <tr>
+                                        <th>Banka</th>
+                                        <th>Şube</th>
+                                        <th>IBAN</th>
+                                        <th>Bakiye</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dynamic Rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-users"></i> ERP Cari Bakiye Özetleri</h3>
+                        </div>
+                        <div class="card-body">
+                            <table class="data-table" id="tblCariOzet">
+                                <thead>
+                                    <tr>
+                                        <th>Cari Kod</th>
+                                        <th>Unvan</th>
+                                        <th>VKN/TCKN</th>
+                                        <th>Bakiye</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dynamic Rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: BANKA EKSTRESİ -->
+            <section id="tab-banka" class="tab-content">
+                <div class="section-actions mb-4">
+                    <h2>Banka Hareket Ekstresi</h2>
+                    <button class="btn btn-secondary" onclick="toggleModal('modalTransfer')">
+                        <i class="fa-solid fa-plus"></i> Simüle Transfer / Gelen Ödeme Ekle
+                    </button>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <table class="data-table" id="tblBankaHareketleri">
+                            <thead>
+                                <tr>
+                                    <th># ID</th>
+                                    <th>İşlem Tarihi</th>
+                                    <th>Banka</th>
+                                    <th>İşlem Tipi</th>
+                                    <th>Açıklama</th>
+                                    <th>Gönderen / VKN</th>
+                                    <th>Tutar (TRY)</th>
+                                    <th>Mutabakat Durumu</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Dynamic Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: ERP FATURALARI -->
+            <section id="tab-erp" class="tab-content">
+                <div class="section-actions mb-4">
+                    <h2>ERP Fatura & Cari Yönetimi</h2>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <table class="data-table" id="tblErpFaturalar">
+                            <thead>
+                                <tr>
+                                    <th>Fatura No</th>
+                                    <th>Cari Unvan</th>
+                                    <th>VKN/TCKN</th>
+                                    <th>Fatura Tipi</th>
+                                    <th>Vade Tarihi</th>
+                                    <th>KDV Dahil Toplam</th>
+                                    <th>Ödeme Durumu</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Dynamic Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: AKILLI MUTABAKAT -->
+            <section id="tab-mutabakat" class="tab-content">
+                <div class="card glass-hero mb-4">
+                    <div class="hero-content">
+                        <h2><i class="fa-solid fa-wand-magic-sparkles"></i> MSSQL Akıllı Mutabakat Motoru</h2>
+                        <p>Banka hesaplarınıza gelen HAVALE / EFT işlemlerini, ERP'deki açık satış faturaları ile Fatura Numarası, VKN/TCKN ve Tutar eşleşme algoritmalarıyla saniyeler içinde otomatik kapatır.</p>
+                        <button class="btn btn-primary btn-lg mt-3" id="btnRunSyncLarge">
+                            <i class="fa-solid fa-play"></i> Mutabakat Motorunu Çalıştır
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-list-check"></i> Eşleşme Sonuç Paneli</h3>
+                    </div>
+                    <div class="card-body" id="mutabakatResultsContainer">
+                        <p class="text-muted text-center py-4">Henüz mutabakat çalıştırılmadı. Yukarıdaki butona tıklayarak MSSQL eşleştirmesini başlatabilirsiniz.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: LOGLAR -->
+            <section id="tab-loglar" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-terminal"></i> MSSQL Sistem İşlem Logları</h3>
+                    </div>
+                    <div class="card-body">
+                        <ul class="log-list" id="sysLogList">
+                            <!-- Dynamic Logs -->
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- MODAL: Yeni Banka Transfer Ekleme -->
+    <div class="modal" id="modalTransfer">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-money-bill-transfer"></i> Yeni Banka Hareketi Ekle (MSSQL)</h3>
+                <button class="btn-close" onclick="toggleModal('modalTransfer')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="formTransfer">
+                    <div class="form-group">
+                        <label>İşlem Tipi</label>
+                        <select id="trIslemTipi" class="form-control">
+                            <option value="GELEN_TRANSFER">Gelen Transfer (Alacak / Tahsilat)</option>
+                            <option value="GIDEN_TRANSFER">Giden Transfer (Borç / Ödeme)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Gönderen / Alıcı Unvanı</label>
+                        <input type="text" id="trGonderenUnvan" class="form-control" placeholder="Örn: Anadolu Mobilya A.Ş." required>
+                    </div>
+                    <div class="form-group">
+                        <label>VKN / TCKN</label>
+                        <input type="text" id="trGonderenVkn" class="form-control" placeholder="10 Haneli VKN veya 11 Haneli TCKN">
+                    </div>
+                    <div class="form-group">
+                        <label>Tutar (TRY)</label>
+                        <input type="number" step="0.01" id="trTutar" class="form-control" placeholder="47200.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Açıklama (Fatura No İpuçları İçerebilir)</label>
+                        <input type="text" id="trAciklama" class="form-control" placeholder="Örn: FAT-2026-001 FATURA ODEMESI" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">MSSQL'e Kaydet</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom JS -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

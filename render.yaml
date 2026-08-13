@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: sillaje-erp
+    env: python
+    region: frankfurt
+    buildCommand: pip install -r SILLAJEERP/requirements.txt
+    startCommand: cd SILLAJEERP && gunicorn app:app
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: BANK_API_URL
+        value: https://banka-portal.onrender.com/api/dbs/fatura-kayit
+
+  - type: web
+    name: banka-portal
+    env: python
+    region: frankfurt
+    buildCommand: pip install -r "CORPORATE BANK/requirements.txt"
+    startCommand: cd "CORPORATE BANK" && gunicorn banka_app:app
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: ERP_WEBHOOK_URL
+        value: https://sillaje-erp.onrender.com/api/webhook/mail-gonder
