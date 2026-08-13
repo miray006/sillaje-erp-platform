@@ -20,6 +20,10 @@ class Config:
     # SQLite Fallback Path
     SQLITE_PATH = os.path.join(os.path.dirname(__file__), 'sillaje_erp.db')
     
-    # Integration Endpoints (Supports local & cloud environment variables)
-    BANK_API_URL = os.environ.get('BANK_API_URL', f"http://127.0.0.1:{BANK_PORT}/api/dbs/fatura-kayit")
-    ERP_WEBHOOK_URL = os.environ.get('ERP_WEBHOOK_URL', f"http://127.0.0.1:{PORT}/api/webhook/mail-gonder")
+    # Integration Endpoints (Detects local vs cloud Render environment automatically)
+    is_render = os.environ.get('RENDER') or os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+    default_bank_url = "https://banka-portal.onrender.com/api/dbs/fatura-kayit" if is_render else f"http://127.0.0.1:{BANK_PORT}/api/dbs/fatura-kayit"
+    default_webhook_url = "https://sillaje-erp.onrender.com/api/webhook/mail-gonder" if is_render else f"http://127.0.0.1:{PORT}/api/webhook/mail-gonder"
+
+    BANK_API_URL = os.environ.get('BANK_API_URL', default_bank_url)
+    ERP_WEBHOOK_URL = os.environ.get('ERP_WEBHOOK_URL', default_webhook_url)

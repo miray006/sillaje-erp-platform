@@ -18,7 +18,9 @@ app.secret_key = "corporate-bank-portal-secret-2026"
 # Run setup on launch
 init_bank_db()
 
-ERP_WEBHOOK_URL = os.environ.get('ERP_WEBHOOK_URL', "http://127.0.0.1:5000/api/webhook/mail-gonder")
+is_render = os.environ.get('RENDER') or os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+default_webhook_url = "https://sillaje-erp.onrender.com/api/webhook/mail-gonder" if is_render else "http://127.0.0.1:5000/api/webhook/mail-gonder"
+ERP_WEBHOOK_URL = os.environ.get('ERP_WEBHOOK_URL', default_webhook_url)
 
 @app.after_request
 def add_header(response):

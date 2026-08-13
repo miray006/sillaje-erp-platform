@@ -91,12 +91,12 @@ const BankingModule = {
     },
 
     async openMailDetail(mailId) {
-        const mail = (window.currentMails || []).find(m => m.id === mailId);
+        const mail = (window.currentMails || []).find(m => String(m.id) === String(mailId));
         if (!mail) return;
 
         // Mark read
         if (mail.is_read === 0) {
-            await API.markMailRead(mailId);
+            await API.markMailRead(mail.id);
             this.loadMailInbox();
         }
 
@@ -104,7 +104,7 @@ const BankingModule = {
         const bodyEl = document.getElementById("mail-detail-body");
 
         if (modal && bodyEl) {
-            bodyEl.innerHTML = mail.body_html;
+            bodyEl.innerHTML = mail.body_html || `<div style="padding: 20px; color: #FFF; font-size: 14px; line-height: 1.6;">${mail.subject}</div>`;
             modal.classList.add("active");
         }
     },
