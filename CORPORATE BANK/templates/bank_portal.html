@@ -778,7 +778,14 @@
         function bankLogout() {
             localStorage.removeItem("bank_user_logged_in");
             const overlay = document.getElementById("bank-login-overlay");
-            if (overlay) overlay.classList.remove("hidden");
+            const appContainer = document.querySelector(".app-container");
+            if (overlay) {
+                overlay.classList.remove("hidden");
+                overlay.style.display = "flex";
+            }
+            if (appContainer) {
+                appContainer.style.display = "none";
+            }
             showToast("Banka portalı oturumu kapatıldı.", "info");
         }
 
