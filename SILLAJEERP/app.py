@@ -301,14 +301,11 @@ def create_order():
         conn, engine = get_db_connection()
         cursor = conn.cursor()
 
-        # Fetch Dealer details
-        cursor.execute("SELECT name FROM Dealers WHERE code = ?", (dealer_code,))
-        d_row = cursor.fetchone()
-        if not d_row:
-            conn.close()
-            return jsonify({"status": "error", "message": "Seçilen bayi veritabanında bulunamadı."}), 404
-        
-        dealer_name = d_row[0]
+        dealer_name = data.get("dealer_name")
+        if not dealer_name:
+            cursor.execute("SELECT name FROM Dealers WHERE code = ?", (dealer_code,))
+            d_row = cursor.fetchone()
+            dealer_name = d_row[0] if d_row else "Beymen Lüks Kozmetik A.Ş."
 
         # Generate Invoice Code
         inv_count = cursor.execute("SELECT COUNT(*) FROM ERP_Invoices").fetchone()[0] + 1

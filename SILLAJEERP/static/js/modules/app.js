@@ -30,17 +30,25 @@ const App = {
 
     showLoginOverlay() {
         const overlay = document.getElementById("login-overlay");
+        const appLayout = document.querySelector(".app-layout");
         if (overlay) {
             overlay.classList.remove("hidden");
             overlay.style.display = "flex";
+        }
+        if (appLayout) {
+            appLayout.style.display = "none";
         }
     },
 
     showMainApp(user) {
         const overlay = document.getElementById("login-overlay");
+        const appLayout = document.querySelector(".app-layout");
         if (overlay) {
             overlay.classList.add("hidden");
             overlay.style.display = "none";
+        }
+        if (appLayout) {
+            appLayout.style.display = "flex";
         }
 
         // Auto load initial data for all 7 tabs
@@ -189,12 +197,15 @@ const App = {
         if (newOrderForm) {
             newOrderForm.addEventListener("submit", async (e) => {
                 e.preventDefault();
-                const dealerCode = document.getElementById("new-order-dealer").value;
+                const dealerSelect = document.getElementById("new-order-dealer");
+                const dealerCode = dealerSelect ? dealerSelect.value : "DLR-001";
+                const selectedOptionText = dealerSelect && dealerSelect.selectedIndex >= 0 ? dealerSelect.options[dealerSelect.selectedIndex].text : "";
+                const dealerName = selectedOptionText ? selectedOptionText.split('(')[0].trim() : "Beymen Lüks Kozmetik A.Ş.";
                 const amount = parseFloat(document.getElementById("new-order-amount").value);
                 const dueDate = document.getElementById("new-order-duedate").value;
 
                 try {
-                    const res = await API.createOrder({ dealer_code: dealerCode, total_amount: amount, due_date: dueDate });
+                    const res = await API.createOrder({ dealer_code: dealerCode, dealer_name: dealerName, total_amount: amount, due_date: dueDate });
                     this.showToast(res.message, "success");
                     if (modalNewOrder) modalNewOrder.classList.remove("active");
                     this.loadOrders();

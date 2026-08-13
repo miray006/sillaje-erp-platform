@@ -10,12 +10,34 @@ class BankConfig:
     MSSQL_CONN_STR = f"DRIVER={{{MSSQL_DRIVER}}};SERVER={MSSQL_SERVER};DATABASE={MSSQL_DATABASE};Trusted_Connection=yes;TrustServerCertificate=yes;Connection Timeout=2;"
     SQLITE_PATH = os.path.join(os.path.dirname(__file__), 'corporate_bank.db')
 
+_CACHED_BANK_ENGINE = None
+
 def get_bank_db_connection():
+    global _CACHED_BANK_ENGINE
+    if _CACHED_BANK_ENGINE == "SQLITE":
+        conn = sqlite3.connect(BankConfig.SQLITE_PATH, timeout=5)
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.row_factory = sqlite3.Row
+        return conn, "SQLITE"
+    elif _CACHED_BANK_ENGINE == "MSSQL":
+        try:
+            conn = pyodbc.connect(BankConfig.MSSQL_CONN_STR, timeout=1)
+            return conn, "MSSQL"
+        except Exception:
+            _CACHED_BANK_ENGINE = "SQLITE"
+            conn = sqlite3.connect(BankConfig.SQLITE_PATH, timeout=5)
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.row_factory = sqlite3.Row
+            return conn, "SQLITE"
+
     try:
-        conn = pyodbc.connect(BankConfig.MSSQL_CONN_STR, timeout=3)
+        conn = pyodbc.connect(BankConfig.MSSQL_CONN_STR, timeout=0.2)
+        _CACHED_BANK_ENGINE = "MSSQL"
         return conn, "MSSQL"
-    except Exception as e:
-        conn = sqlite3.connect(BankConfig.SQLITE_PATH)
+    except Exception:
+        _CACHED_BANK_ENGINE = "SQLITE"
+        conn = sqlite3.connect(BankConfig.SQLITE_PATH, timeout=5)
+        conn.execute("PRAGMA journal_mode=WAL")
         conn.row_factory = sqlite3.Row
         return conn, "SQLITE"
 

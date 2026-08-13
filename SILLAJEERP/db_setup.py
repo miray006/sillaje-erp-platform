@@ -5,14 +5,35 @@ import sys
 from datetime import datetime, timedelta
 from config import Config
 
+_CACHED_ENGINE = None
+
 def get_db_connection():
     """Returns an active pyodbc MSSQL connection or sqlite3 fallback connection wrapped with dict cursor capability."""
+    global _CACHED_ENGINE
+    if _CACHED_ENGINE == "SQLITE":
+        conn = sqlite3.connect(Config.SQLITE_PATH, timeout=5)
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.row_factory = sqlite3.Row
+        return conn, "SQLITE"
+    elif _CACHED_ENGINE == "MSSQL":
+        try:
+            conn = pyodbc.connect(Config.MSSQL_CONN_STR, timeout=1)
+            return conn, "MSSQL"
+        except Exception:
+            _CACHED_ENGINE = "SQLITE"
+            conn = sqlite3.connect(Config.SQLITE_PATH, timeout=5)
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.row_factory = sqlite3.Row
+            return conn, "SQLITE"
+
     try:
-        conn = pyodbc.connect(Config.MSSQL_CONN_STR, timeout=2)
+        conn = pyodbc.connect(Config.MSSQL_CONN_STR, timeout=0.2)
+        _CACHED_ENGINE = "MSSQL"
         return conn, "MSSQL"
-    except Exception as e:
-        # Seamless SQLite fallback
-        conn = sqlite3.connect(Config.SQLITE_PATH)
+    except Exception:
+        _CACHED_ENGINE = "SQLITE"
+        conn = sqlite3.connect(Config.SQLITE_PATH, timeout=5)
+        conn.execute("PRAGMA journal_mode=WAL")
         conn.row_factory = sqlite3.Row
         return conn, "SQLITE"
 

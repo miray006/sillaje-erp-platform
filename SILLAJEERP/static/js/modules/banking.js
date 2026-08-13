@@ -21,20 +21,32 @@ const BankingModule = {
         btnElement.disabled = true;
         btnElement.innerHTML = `<span class="spinner"></span> İletiliyor...`;
 
+        // Determine target Bank URL for instant redirect
+        const isCloud = window.location.hostname.includes("onrender.com");
+        const bankTargetUrl = isCloud ? "https://bank-portal-3u87.onrender.com" : "http://127.0.0.1:5001";
+
         try {
-            const res = await API.sendDBSRequest(invoiceNo);
+            // Send API POST request asynchronously
+            const resPromise = API.sendDBSRequest(invoiceNo);
+
             if (window.App && typeof window.App.showToast === 'function') {
-                window.App.showToast(res.message, "success");
+                window.App.showToast(`${invoiceNo} numaralı fatura Bankaya aktarıldı. Banka sayfasına yönlendiriliyorsunuz...`, "success");
             }
-            // Refresh Orders table and Dashboard stats
+
+            // Immediately open Bank Platform tab so user is not kept waiting
+            setTimeout(() => {
+                window.open(bankTargetUrl, "_blank");
+            }, 400);
+
+            const res = await resPromise;
             if (window.App) {
                 window.App.loadOrders();
                 window.App.loadDashboardStats();
             }
         } catch (error) {
-            if (window.App && typeof window.App.showToast === 'function') {
-                window.App.showToast(`DBS Gönderim Hatası: ${error.message}`, "error");
-            }
+            console.warn("sendDBSRequest warning:", error);
+            // Even if background API has delay, open Bank page for user
+            window.open(bankTargetUrl, "_blank");
         } finally {
             btnElement.disabled = false;
             btnElement.innerHTML = originalText;

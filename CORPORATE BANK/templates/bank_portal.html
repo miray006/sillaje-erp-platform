@@ -516,11 +516,11 @@
             <form id="bank-login-form">
                 <div class="form-group">
                     <label>Kurumsal E-Posta</label>
-                    <input type="email" id="bank-email" class="form-input" value="banka@kurumsal-banka.com" required placeholder="banka@kurumsal-banka.com">
+                    <input type="email" id="bank-email" class="form-input" required placeholder="banka@kurumsal-banka.com">
                 </div>
                 <div class="form-group">
                     <label>Şifre</label>
-                    <input type="password" id="bank-password" class="form-input" value="Banka2026!" required placeholder="••••••••">
+                    <input type="password" id="bank-password" class="form-input" required placeholder="••••••••">
                 </div>
 
                 <div id="bank-login-error" class="login-error">Hatalı e-posta veya şifre!</div>
@@ -529,7 +529,6 @@
                     Banka Portalı Giriş Yap
                 </button>
             </form>
-            <div style="margin-top: 18px; font-size: 11px; color: var(--text-dim);">Giriş Bilgileri: banka@kurumsal-banka.com / Banka2026!</div>
         </div>
     </div>
 
@@ -739,10 +738,15 @@
         // Ensure Login Screen Appears First on load
         document.addEventListener("DOMContentLoaded", () => {
             const overlay = document.getElementById("bank-login-overlay");
+            const appContainer = document.querySelector(".app-container");
             if (overlay && !localStorage.getItem("bank_user_logged_in")) {
                 overlay.classList.remove("hidden");
+                overlay.style.display = "flex";
+                if (appContainer) appContainer.style.display = "none";
             } else if (overlay) {
                 overlay.classList.add("hidden");
+                overlay.style.display = "none";
+                if (appContainer) appContainer.style.display = "flex";
             }
             loadBankData();
         });
@@ -755,10 +759,13 @@
                 const email = document.getElementById("bank-email").value.trim();
                 const password = document.getElementById("bank-password").value.trim();
                 const errEl = document.getElementById("bank-login-error");
+                const appContainer = document.querySelector(".app-container");
 
                 if (email === "banka@kurumsal-banka.com" && password === "Banka2026!") {
                     localStorage.setItem("bank_user_logged_in", "true");
                     document.getElementById("bank-login-overlay").classList.add("hidden");
+                    document.getElementById("bank-login-overlay").style.display = "none";
+                    if (appContainer) appContainer.style.display = "flex";
                     showToast("Banka Operasyon Portalı sistemine hoş geldiniz", "success");
                     loadBankData();
                 } else {
@@ -921,15 +928,19 @@
                     }
 
                     if (outboxTbody) {
-                        const emailLogs = data.logs.filter(l => l.action.includes('TAHSILAT') || l.details.includes('Dekont'));
-                        outboxTbody.innerHTML = emailLogs.map(l => `
-                            <tr>
-                                <td style="color: var(--text-dim); font-size: 12px;">${l.created_at}</td>
-                                <td style="color: var(--primary);">http://127.0.0.1:5000/api/webhook/mail-gonder</td>
-                                <td><strong>${l.details.split('Dekont No: ')[1]?.split(' ')[0] || 'DEKONT-2026'}</strong></td>
-                                <td><span class="badge badge-collected">HTTP 200 OK (İletildi)</span></td>
-                            </tr>
-                        `).join('');
+                        const emailLogs = data.logs.filter(l => l.action.includes('TAHSILAT') || l.action.includes('FATURA') || l.details.includes('Dekont') || l.details.includes('BNK') || l.details.includes('alacak'));
+                        if (emailLogs.length === 0) {
+                            outboxTbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-dim);">E-posta / Webhook çıkış kaydı bulunmuyor.</td></tr>`;
+                        } else {
+                            outboxTbody.innerHTML = emailLogs.map(l => `
+                                <tr>
+                                    <td style="color: var(--text-dim); font-size: 12px;">${l.created_at}</td>
+                                    <td style="color: var(--primary); font-size: 12px;">https://sillaje-erp-platform.onrender.com/api/webhook/mail-gonder</td>
+                                    <td><strong>${l.details.includes('Dekont No: ') ? l.details.split('Dekont No: ')[1].split(' ')[0] : (l.details.includes('Ref: ') ? l.details.split('Ref: ')[1].split(' ')[0] : 'BNK-DEKONT')}</strong></td>
+                                    <td><span class="badge badge-collected">HTTP 200 OK (İletildi)</span></td>
+                                </tr>
+                            `).join('');
+                        }
                     }
                 }
             } catch (err) {
