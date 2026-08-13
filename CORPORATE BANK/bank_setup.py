@@ -158,6 +158,31 @@ def init_bank_db():
             cursor.execute("INSERT INTO Bank_Dealers (dealer_code, dealer_name, tax_no, dbs_limit, used_limit, available_limit) VALUES (?, ?, ?, ?, 0.0, ?)", (d[0], d[1], d[2], d[3], d[3]))
         else:
             cursor.execute("UPDATE Bank_Dealers SET dealer_name = ?, tax_no = ?, dbs_limit = ? WHERE dealer_code = ?", (d[1], d[2], d[3], d[0]))
+
+    # Seed sample pending receivables if Bank_DBS_Transactions is empty on fresh setup
+    cursor.execute("SELECT COUNT(*) FROM Bank_DBS_Transactions")
+    if cursor.fetchone()[0] == 0:
+        now_date = datetime.now().strftime("%Y-%m-%d")
+        sample_txs = [
+            ("BNK-REF-202608131001", "DLR-005", "Brandroom Nişantaşı Mağazacılık", "INV-2026-007", 123399.99, "2026-09-12", "Bekliyor", now_date),
+            ("BNK-REF-202608131002", "DLR-004", "Vakko Perfumery & Beauty", "INV-2026-004", 678654.00, "2026-09-24", "Bekliyor", now_date)
+        ]
+        for tx in sample_txs:
+            cursor.execute("""
+            INSERT INTO Bank_DBS_Transactions (dbs_ref, dealer_code, dealer_name, invoice_no, amount, due_date, status, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, tx)
+    
+    # Seed initial audit logs if Bank_Logs is empty
+    cursor.execute("SELECT COUNT(*) FROM Bank_Logs")
+    if cursor.fetchone()[0] == 0:
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        sample_logs = [
+            ("BNK_SYSTEM_INIT", "Banka Operasyon Platformu altyapı ve veritabanı motoru başlatıldı.", now_str),
+            ("BNK_LIMIT_SETUP", "15 Kurumsal Bayi hesabı için toplam 45.200.000,00 TL Doğrudan Borçlandırma Sistemi (DBS) kredi limiti tahsis edildi.", now_str)
+        ]
+        for lg in sample_logs:
+            cursor.execute("INSERT INTO Bank_Logs (action, details, created_at) VALUES (?, ?, ?)", lg)
     
     conn.commit()
 

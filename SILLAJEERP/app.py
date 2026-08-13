@@ -193,6 +193,17 @@ def add_perfume():
 
         conn, engine = get_db_connection()
         cursor = conn.cursor()
+
+        # Auto generate or resolve duplicate product code
+        if not code:
+            cnt = cursor.execute("SELECT COUNT(*) FROM ERP_Products").fetchone()[0] + 1
+            code = f"SLJ-{cnt:03d}"
+        else:
+            cursor.execute("SELECT COUNT(*) FROM ERP_Products WHERE code = ?", (code,))
+            if cursor.fetchone()[0] > 0:
+                cnt = cursor.execute("SELECT COUNT(*) FROM ERP_Products").fetchone()[0] + 1
+                code = f"{code}-A{cnt}"
+
         cursor.execute("""
         INSERT INTO ERP_Products (code, name, category, collection, volume_ml, price_tl, cost_tl, stock, reorder_point, safety_stock, daily_demand, top_notes, heart_notes, base_notes, supplier_name)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 10, 3.5, ?, ?, ?, ?)

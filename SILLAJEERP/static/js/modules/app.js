@@ -67,7 +67,18 @@ const App = {
         const btnGrid = document.getElementById("btn-view-grid");
         const btnList = document.getElementById("btn-view-list");
 
-        if (mode === 'grid') {
+        if (mode === 'list') {
+            if (gridEl) gridEl.style.display = "none";
+            if (tableContainer) tableContainer.style.display = "block";
+            if (btnGrid) {
+                btnGrid.style.background = "transparent";
+                btnGrid.style.color = "var(--text-muted)";
+            }
+            if (btnList) {
+                btnList.style.background = "linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)";
+                btnList.style.color = "#FFF";
+            }
+        } else {
             if (gridEl) gridEl.style.display = "grid";
             if (tableContainer) tableContainer.style.display = "none";
             if (btnGrid) {
@@ -78,19 +89,31 @@ const App = {
                 btnList.style.background = "transparent";
                 btnList.style.color = "var(--text-muted)";
             }
-        } else {
-            if (gridEl) gridEl.style.display = "none";
-            if (tableContainer) tableContainer.style.display = "block";
-            if (btnList) {
-                btnList.style.background = "linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)";
-                btnList.style.color = "#FFF";
-            }
-            if (btnGrid) {
-                btnGrid.style.background = "transparent";
-                btnGrid.style.color = "var(--text-muted)";
-            }
         }
         this.loadProducts();
+    },
+
+    async openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.add("active");
+            if (modalId === 'new-order-modal') {
+                try {
+                    const data = await API.getDealers();
+                    const selectEl = document.getElementById("new-order-dealer");
+                    if (selectEl && data && data.dealers && data.dealers.length > 0) {
+                        selectEl.innerHTML = data.dealers.map(d => `<option value="${d.code}">${d.name} (${d.code})</option>`).join('');
+                    }
+                } catch (err) {
+                    console.error("getDealers error:", err);
+                }
+            }
+        }
+    },
+
+    closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) modal.classList.remove("active");
     },
 
     bindEvents() {

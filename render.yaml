@@ -2,6 +2,7 @@ services:
   - type: web
     name: sillaje-erp
     env: python
+    plan: free
     region: frankfurt
     buildCommand: pip install -r SILLAJEERP/requirements.txt
     startCommand: cd SILLAJEERP && gunicorn app:app
@@ -14,6 +15,7 @@ services:
   - type: web
     name: banka-portal
     env: python
+    plan: free
     region: frankfurt
     buildCommand: pip install -r "CORPORATE BANK/requirements.txt"
     startCommand: cd "CORPORATE BANK" && gunicorn banka_app:app

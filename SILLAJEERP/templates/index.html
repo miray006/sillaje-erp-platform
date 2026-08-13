@@ -226,7 +226,7 @@
                                 <button id="btn-view-grid" class="btn-primary" style="padding: 6px 14px; font-size: 12px; width: auto;" onclick="App.setProductView('grid')">Kart Görünümü</button>
                                 <button id="btn-view-list" class="btn-secondary" style="padding: 6px 14px; font-size: 12px; width: auto; background: transparent; border: none; color: var(--text-muted); cursor: pointer;" onclick="App.setProductView('list')">Liste Görünümü</button>
                             </div>
-                            <button id="btn-new-perfume" class="btn-primary" style="width: auto; padding: 8px 18px;">+ Yeni Parfüm Ekle</button>
+                            <button id="btn-new-perfume" class="btn-primary" style="width: auto; padding: 8px 18px;" onclick="App.openModal('new-perfume-modal')">+ Yeni Parfüm Ekle</button>
                         </div>
                     </div>
 
@@ -299,7 +299,7 @@
                             <h3 style="font-size: 18px; font-weight: 700; color: #FFF;">Bayi Siparişleri & Banka Portalı</h3>
                             <p style="font-size: 13px; color: var(--text-dim);">Bayi faturalarının takibi ve Banka Operasyon Platformuna aktarımı</p>
                         </div>
-                        <button id="btn-new-order" class="btn-primary" style="width: auto;">+ Yeni Bayi Faturası Düzenle</button>
+                        <button id="btn-new-order" class="btn-primary" style="width: auto;" onclick="App.openModal('new-order-modal')">+ Yeni Bayi Faturası Düzenle</button>
                     </div>
 
                     <div class="table-responsive">
@@ -331,7 +331,7 @@
                         <h3 style="font-size: 18px; font-weight: 700; color: #FFF;">Fransa & İtalya Hammadde Tedarikçileri</h3>
                         <p style="font-size: 13px; color: var(--text-dim);">Esans, cam şişe, valf ve lüks ambalaj üreticileri performans metrikleri</p>
                     </div>
-                    <button id="btn-new-supplier" class="btn-primary" style="width: auto;">+ Yeni Tedarikçi Ekle</button>
+                    <button id="btn-new-supplier" class="btn-primary" style="width: auto;" onclick="App.openModal('new-supplier-modal')">+ Yeni Tedarikçi Ekle</button>
                 </div>
 
                 <div id="suppliers-grid" class="suppliers-grid">
