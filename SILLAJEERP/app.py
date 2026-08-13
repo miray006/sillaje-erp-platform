@@ -522,16 +522,24 @@ def mail_inbox():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@app.route("/api/mail/mark-read", methods=["POST"])
 @app.route("/api/mail/mark-read/<int:mail_id>", methods=["POST"])
-def mark_mail_read(mail_id):
+def mark_mail_read(mail_id=None):
     """Marks a bank mail as read."""
     try:
+        data = request.json or {}
+        if not mail_id:
+            mail_id = data.get("mail_id") or data.get("id")
+
+        if not mail_id:
+            return jsonify({"status": "error", "message": "Mail ID eksik."}), 400
+
         conn, engine = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("UPDATE Bank_Mail_Inbox SET is_read = 1 WHERE id = ?", (mail_id,))
         conn.commit()
         conn.close()
-        return jsonify({"status": "success"})
+        return jsonify({"status": "success", "message": "Mail okundu olarak işaretlendi."})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 

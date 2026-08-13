@@ -78,6 +78,11 @@ const API = {
         });
     },
 
+    // Dealers
+    getDealers() {
+        return this.request('/api/dealers');
+    },
+
     // Suppliers
     getSuppliers() {
         return this.request('/api/suppliers');
@@ -98,7 +103,7 @@ const API = {
     markMailRead(mailId) {
         return this.request('/api/mail/mark-read', {
             method: 'POST',
-            body: JSON.stringify({ mail_id: mailId })
+            body: JSON.stringify({ mail_id: mailId, id: mailId })
         });
     }
 };
