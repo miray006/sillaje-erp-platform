@@ -322,25 +322,35 @@ def create_order():
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Onaylandı', 'Bekliyor', ?)
         """, (invoice_no, dealer_code, dealer_name, now_str, due_date, total_amount, tax_amount, net_amount, now_str))
 
-        # Auto-transmit directly to Bank Platform Port 5001 API
-        try:
-            bank_payload = {
-                "invoice_no": invoice_no,
-                "dealer_code": dealer_code,
-                "dealer_name": dealer_name,
-                "amount": total_amount,
-                "due_date": due_date
-            }
-            resp = requests.post(Config.BANK_API_URL, json=bank_payload, timeout=5)
-            if resp.status_code == 200:
-                cursor.execute("UPDATE ERP_Invoices SET dbs_status = 'Gönderildi' WHERE invoice_no = ?", (invoice_no,))
-        except Exception as b_err:
-            print("[ERP AUTO BANK DISPATCH WARN]:", b_err)
+        # Auto-transmit directly to Bank Platform with Multi-target retry
+        target_urls = [
+            Config.BANK_API_URL,
+            "https://banka-portal.onrender.com/api/dbs/fatura-kayit",
+            "http://127.0.0.1:5001/api/dbs/fatura-kayit"
+        ]
+        unique_targets = list(dict.fromkeys(target_urls))
+
+        bank_payload = {
+            "invoice_no": invoice_no,
+            "dealer_code": dealer_code,
+            "dealer_name": dealer_name,
+            "amount": total_amount,
+            "due_date": due_date
+        }
+
+        for target_url in unique_targets:
+            try:
+                resp = requests.post(target_url, json=bank_payload, timeout=6)
+                if resp.status_code in [200, 201]:
+                    cursor.execute("UPDATE ERP_Invoices SET dbs_status = 'Gönderildi' WHERE invoice_no = ?", (invoice_no,))
+                    break
+            except Exception as b_err:
+                print(f"[ERP AUTO DISPATCH WARN] Target {target_url} failed: {b_err}")
 
         conn.commit()
         conn.close()
 
-        return jsonify({"status": "success", "message": f"{invoice_no} numaralı fatura oluşturuldu ve otomatik olarak Banka Portalı'na aktarıldı."})
+        return jsonify({"status": "success", "message": f"{invoice_no} numaralı fatura oluşturuldu ve Banka Portalı'na aktarıldı."})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 

@@ -20,10 +20,17 @@ class Config:
     # SQLite Fallback Path
     SQLITE_PATH = os.path.join(os.path.dirname(__file__), 'sillaje_erp.db')
     
-    # Integration Endpoints (Detects local vs cloud Render environment automatically)
+    # Integration Endpoints (Detects local vs cloud Render environment automatically with path normalization)
     is_render = os.environ.get('RENDER') or os.environ.get('RENDER_EXTERNAL_HOSTNAME')
     default_bank_url = "https://banka-portal.onrender.com/api/dbs/fatura-kayit" if is_render else f"http://127.0.0.1:{BANK_PORT}/api/dbs/fatura-kayit"
     default_webhook_url = "https://sillaje-erp.onrender.com/api/webhook/mail-gonder" if is_render else f"http://127.0.0.1:{PORT}/api/webhook/mail-gonder"
 
-    BANK_API_URL = os.environ.get('BANK_API_URL', default_bank_url)
-    ERP_WEBHOOK_URL = os.environ.get('ERP_WEBHOOK_URL', default_webhook_url)
+    raw_bank_url = os.environ.get('BANK_API_URL', default_bank_url)
+    if raw_bank_url and not raw_bank_url.endswith('/api/dbs/fatura-kayit'):
+        raw_bank_url = raw_bank_url.rstrip('/') + '/api/dbs/fatura-kayit'
+    BANK_API_URL = raw_bank_url
+
+    raw_webhook_url = os.environ.get('ERP_WEBHOOK_URL', default_webhook_url)
+    if raw_webhook_url and not raw_webhook_url.endswith('/api/webhook/mail-gonder'):
+        raw_webhook_url = raw_webhook_url.rstrip('/') + '/api/webhook/mail-gonder'
+    ERP_WEBHOOK_URL = raw_webhook_url

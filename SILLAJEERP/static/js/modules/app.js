@@ -102,7 +102,8 @@ const App = {
                     const data = await API.getDealers();
                     const selectEl = document.getElementById("new-order-dealer");
                     if (selectEl && data && data.dealers && data.dealers.length > 0) {
-                        selectEl.innerHTML = data.dealers.map(d => `<option value="${d.code}">${d.name} (${d.code})</option>`).join('');
+                        const currentVal = selectEl.value;
+                        selectEl.innerHTML = data.dealers.map(d => `<option value="${d.code}" ${d.code === currentVal ? 'selected' : ''}>${d.name} (${d.code})</option>`).join('');
                     }
                 } catch (err) {
                     console.error("getDealers error:", err);

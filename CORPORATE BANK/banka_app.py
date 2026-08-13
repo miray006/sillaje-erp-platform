@@ -20,7 +20,10 @@ init_bank_db()
 
 is_render = os.environ.get('RENDER') or os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 default_webhook_url = "https://sillaje-erp.onrender.com/api/webhook/mail-gonder" if is_render else "http://127.0.0.1:5000/api/webhook/mail-gonder"
-ERP_WEBHOOK_URL = os.environ.get('ERP_WEBHOOK_URL', default_webhook_url)
+raw_wh = os.environ.get('ERP_WEBHOOK_URL', default_webhook_url)
+if raw_wh and not raw_wh.endswith('/api/webhook/mail-gonder'):
+    raw_wh = raw_wh.rstrip('/') + '/api/webhook/mail-gonder'
+ERP_WEBHOOK_URL = raw_wh
 
 @app.after_request
 def add_header(response):
