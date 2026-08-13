@@ -271,11 +271,22 @@ def collect_dbs():
                 """
             }
 
-            try:
-                resp = requests.post(ERP_WEBHOOK_URL, json=email_payload, timeout=4)
-                print(f"[BANKA WEBHOOK] Webhook post sent to ERP for {receipt_code}: status {resp.status_code}")
-            except Exception as webhook_err:
-                print(f"[BANKA WEBHOOK WARN] Failed to dispatch webhook to ERP ({webhook_err}). Mail saved for polling.")
+            # Multi-target Webhook retry mechanism for ERP notification
+            webhook_targets = [
+                ERP_WEBHOOK_URL,
+                "https://sillaje-erp.onrender.com/api/webhook/mail-gonder",
+                "http://127.0.0.1:5000/api/webhook/mail-gonder"
+            ]
+            unique_webhooks = list(dict.fromkeys(webhook_targets))
+
+            for w_url in unique_webhooks:
+                try:
+                    resp = requests.post(w_url, json=email_payload, timeout=5)
+                    if resp.status_code in [200, 201]:
+                        print(f"[BANKA WEBHOOK] Webhook post delivered to ERP via {w_url} for {receipt_code}")
+                        break
+                except Exception as webhook_err:
+                    print(f"[BANKA WEBHOOK WARN] Target {w_url} failed: {webhook_err}")
 
         sync_dealer_limits(cursor)
 

@@ -65,7 +65,7 @@ const BankingModule = {
             }
 
             mailContainer.innerHTML = data.mails.map(m => `
-                <div class="mail-item ${m.is_read === 0 ? 'unread' : ''}" onclick="BankingModule.openMailDetail(${m.id})">
+                <div class="mail-item ${m.is_read === 0 ? 'unread' : ''}" style="cursor: pointer;" onclick="window.BankingModule.openMailDetail('${m.id}')">
                     <div style="display: flex; align-items: center; gap: 16px;">
                         <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); display: flex; align-items: center; justify-content: center; color: #60A5FA;">
                             <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
@@ -91,7 +91,17 @@ const BankingModule = {
     },
 
     async openMailDetail(mailId) {
-        const mail = (window.currentMails || []).find(m => String(m.id) === String(mailId));
+        let mails = window.currentMails;
+        if (!mails || mails.length === 0) {
+            try {
+                const res = await API.getMailInbox();
+                mails = res.mails || [];
+                window.currentMails = mails;
+            } catch (e) {
+                console.error("Fetch inbox error:", e);
+            }
+        }
+        const mail = (mails || []).find(m => String(m.id) === String(mailId));
         if (!mail) return;
 
         // Mark read
@@ -104,7 +114,7 @@ const BankingModule = {
         const bodyEl = document.getElementById("mail-detail-body");
 
         if (modal && bodyEl) {
-            bodyEl.innerHTML = mail.body_html || `<div style="padding: 20px; color: #FFF; font-size: 14px; line-height: 1.6;">${mail.subject}</div>`;
+            bodyEl.innerHTML = mail.body_html || `<div style="padding: 24px; color: #FFF; font-size: 14px; line-height: 1.6;"><h3 style="color: #60A5FA;">${mail.subject}</h3><p style="margin-top:10px;">Kimden: ${mail.sender}</p><p>Tutar: ${parseFloat(mail.amount).toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL</p></div>`;
             modal.classList.add("active");
         }
     },

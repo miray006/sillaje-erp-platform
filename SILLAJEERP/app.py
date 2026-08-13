@@ -374,24 +374,33 @@ def send_dbs_request():
             "due_date": inv["due_date"]
         }
 
-        try:
-            resp = requests.post(Config.BANK_API_URL, json=payload, timeout=5)
-            res_data = resp.json()
-            if resp.status_code == 200 and res_data.get("status") in ["success", "warning"]:
-                cursor.execute("UPDATE ERP_Invoices SET dbs_status = 'Gönderildi' WHERE invoice_no = ?", (invoice_no,))
-                conn.commit()
-                conn.close()
-                return jsonify({
-                    "status": "success",
-                    "message": f"{invoice_no} numaralı fatura Banka Operasyon Platformuna alacak olarak iletildi.",
-                    "bank_response": res_data
-                })
-            else:
-                conn.close()
-                return jsonify({"status": "error", "message": res_data.get("message", "Banka API hatası.")}), 400
-        except Exception as api_err:
-            conn.close()
-            return jsonify({"status": "error", "message": f"Banka Operasyon Platformuna erişilemedi (Port 5001): {str(api_err)}"}), 502
+        # Multi-target POST retry mechanism for ultimate reliability
+        target_urls = [
+            Config.BANK_API_URL,
+            "https://banka-portal.onrender.com/api/dbs/fatura-kayit",
+            "http://127.0.0.1:5001/api/dbs/fatura-kayit"
+        ]
+        unique_targets = list(dict.fromkeys(target_urls))
+
+        last_error = None
+        for target_url in unique_targets:
+            try:
+                resp = requests.post(target_url, json=payload, timeout=6)
+                if resp.status_code in [200, 201]:
+                    res_data = resp.json()
+                    cursor.execute("UPDATE ERP_Invoices SET dbs_status = 'Gönderildi' WHERE invoice_no = ?", (invoice_no,))
+                    conn.commit()
+                    conn.close()
+                    return jsonify({
+                        "status": "success",
+                        "message": f"{invoice_no} numaralı fatura Banka Operasyon Platformuna alacak olarak iletildi.",
+                        "bank_response": res_data
+                    })
+            except Exception as e:
+                last_error = e
+
+        conn.close()
+        return jsonify({"status": "error", "message": f"Banka Operasyon Platformuna erişilemedi: {str(last_error)}"}), 502
 
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
