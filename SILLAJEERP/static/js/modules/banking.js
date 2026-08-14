@@ -1,5 +1,9 @@
 /* SILLAJÉ ERP - Banking & DBS Module */
 const BankingModule = {
+    pollInterval: null,
+    consecutiveErrors: 0,
+    maxErrorsBeforeBackoff: 5,
+
     init() {
         this.startMailInboxPolling();
     },
@@ -44,6 +48,10 @@ const BankingModule = {
     async loadMailInbox() {
         try {
             const data = await API.getMailInbox();
+            
+            // Başarılı istekte hata sayacını sıfırla
+            this.consecutiveErrors = 0;
+
             const mailContainer = document.getElementById("mail-inbox-list");
             const badgeEl = document.getElementById("mail-unread-badge");
             const topBadgeEl = document.getElementById("top-unread-badge");
@@ -68,7 +76,7 @@ const BankingModule = {
                 <div class="mail-item ${m.is_read === 0 ? 'unread' : ''}" style="cursor: pointer;" onclick="window.BankingModule.openMailDetail('${m.id}')">
                     <div style="display: flex; align-items: center; gap: 16px;">
                         <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); display: flex; align-items: center; justify-content: center; color: #60A5FA;">
-                            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                         </div>
                         <div>
                             <div class="mail-subject">${m.subject}</div>
@@ -82,11 +90,17 @@ const BankingModule = {
                 </div>
             `).join('');
 
-            // Store current mails globally for modal viewing
             window.currentMails = data.mails;
 
         } catch (error) {
-            console.error("loadMailInbox Error:", error);
+            this.consecutiveErrors++;
+            console.warn(`loadMailInbox Warning (Deneme: ${this.consecutiveErrors}):`, error.message);
+
+            // Çok fazla üst üste hata alınırsa döngüyü yavaşlatabilir veya durdurabilirsiniz
+            if (this.consecutiveErrors >= this.maxErrorsBeforeBackoff) {
+                console.error("Sunucuya uzun süredir ulaşılamıyor, mail yoklama aralığı durduruldu.");
+                if (this.pollInterval) clearInterval(this.pollInterval);
+            }
         }
     },
 
@@ -104,7 +118,6 @@ const BankingModule = {
         const mail = (mails || []).find(m => String(m.id) === String(mailId));
         if (!mail) return;
 
-        // Mark read
         if (mail.is_read === 0) {
             await API.markMailRead(mail.id);
             this.loadMailInbox();
@@ -127,7 +140,7 @@ const BankingModule = {
     startMailInboxPolling() {
         this.loadMailInbox();
         // Poll every 8 seconds for live receipts
-        setInterval(() => {
+        this.pollInterval = setInterval(() => {
             this.loadMailInbox();
         }, 8000);
     }
