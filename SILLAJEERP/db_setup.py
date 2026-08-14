@@ -380,21 +380,22 @@ def init_erp_db():
     cursor.execute("SELECT COUNT(*) FROM Bank_Mail_Inbox")
     if cursor.fetchone()[0] == 0:
         print("[SILLAJÉ ERP DB] Seeding initial bank receipt notifications...")
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         sample_mail = (
             "DEKONT-20260811-001",
             "Banka Operasyon Platformu <dbs-bildirim@kurumsal-banka.com>",
             "DBS Otomatik Tahsilat Bildirimi - INV-2026-000",
-            """<div style='font-family: Arial; color: #e2e8f0; background: #0f172a; padding: 20px; border-radius: 8px;'>
+            f"""<div style='font-family: Arial; color: #e2e8f0; background: #0f172a; padding: 20px; border-radius: 8px;'>
                 <h3 style='color: #3b82f6;'>DBS TAHSİLAT DEKONTU</h3>
                 <p>Sayın <strong>SILLAJÉ PARFUMS A.Ş.</strong>,</p>
                 <p>Bayiniz <strong>Beymen Lüks Kozmetik A.Ş.</strong> adına kayıtlı <strong>INV-2026-000</strong> numaralı faturanın <strong>250.000,00 TL</strong> tutarındaki DBS alacağı başarıyla tahsil edilmiştir ve kurumsal hesabınıza aktarılmıştır.</p>
                 <hr style='border: 1px solid #334155;'>
-                <p><strong>İşlem Referans No:</strong> DEKONT-20260811-001<br><strong>Tarih:</strong> 2026-08-11 09:30</p>
+                <p><strong>İşlem Referans No:</strong> DEKONT-20260811-001<br><strong>Tarih:</strong> {now_str}</p>
             </div>""",
             250000.00,
             "INV-2026-000",
             "Beymen Lüks Kozmetik A.Ş.",
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            now_str,
             0
         )
         cursor.execute("INSERT INTO Bank_Mail_Inbox (receipt_code, sender, subject, body_html, amount, invoice_no, dealer_name, received_at, is_read) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", sample_mail)

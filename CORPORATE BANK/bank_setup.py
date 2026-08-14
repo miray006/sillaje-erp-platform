@@ -184,7 +184,7 @@ def init_bank_db():
     # Seed sample pending receivables if Bank_DBS_Transactions is empty on fresh setup
     cursor.execute("SELECT COUNT(*) FROM Bank_DBS_Transactions")
     if cursor.fetchone()[0] == 0:
-        now_date = datetime.now().strftime("%Y-%m-%d")
+        now_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         sample_txs = [
             ("BNK-REF-202608131001", "DLR-005", "Brandroom Nişantaşı Mağazacılık", "INV-2026-007", 123399.99, "2026-09-12", "Bekliyor", now_date),
             ("BNK-REF-202608131002", "DLR-004", "Vakko Perfumery & Beauty", "INV-2026-004", 678654.00, "2026-09-24", "Bekliyor", now_date)
